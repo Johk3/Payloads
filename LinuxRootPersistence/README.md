@@ -1,5 +1,5 @@
 # LinuxRootPersistence
-## Persistent Backdoor in 1 Second
+## Rooted Persistent Backdoor in a Second
 
 > When run by the root user, this peace of code will create a root user "sysd" with the pass of "sickkick". After that 
 the program will inject itself into systemd in a way that it can run as root when booted up. If for some reason you do not have
